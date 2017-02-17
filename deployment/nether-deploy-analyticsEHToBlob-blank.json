@@ -1,0 +1,37 @@
+/*
+* This "blank" template is used when no Stream Analytics will be created by the master emplate
+*
+* For more information, please refer to the Nether repository at: https://github.com/MicrosoftDX/nether/tree/master/deployment
+*/
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "jobProperties": {
+            "type" : "object",
+            "metadata" : {
+                "description" : "a JSON object job name, SKU, streaming units, and query to execute"
+            }
+        },
+        "eventHubProperties": {
+            "type" : "object",
+            "metadata" : {
+                "description" : "a JSON object containing: eventHubName, serviceBusNamespace, sharedAccessPolicyName, sharedAccessPolicyKey, consumerGroupName"
+            }
+        },
+        "consumerGroupName": {
+            "type": "string",
+            "defaultValue": "analytics",
+            "metadata": {
+                "description" :"the name of the consumer group to be used by this analytics job"
+            }
+        },
+        "storageProperties": {
+            "type" : "object",
+            "metadata" : {
+                "description" : "a JSON object containing: storage account name, and account key, and output container name"
+            }
+        }
+    },
+    "resources": []
+}

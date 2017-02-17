@@ -137,7 +137,8 @@ $templateParameters = @{
     sqlAdministratorPassword = $SqlAdministratorPassword
     analyticsEventHubNamespace = $AnalyticsEventHubNamespace
     analyticsStorageAccountName = $AnalyticsStorageAccountName
-    
+    deployAnalytics = 'no'
+
     webZipUri = $webZipblob.ICloudBlob.Uri.AbsoluteUri
     # webZipUri = "https://netherassets.blob.core.windows.net/packages/package261.zip"
     # webZipUri = "https://netherbits.blob.core.windows.net/deployment/Nether.Web.zip"

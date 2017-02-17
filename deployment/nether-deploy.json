@@ -295,6 +295,49 @@
                     "storageAccountType": { "value": "[parameters('storageAccountType')]" }
                 } 
             } 
+        },
+        /* The Concurrent User (CCU) Stream Analytics Job */
+        { 
+            "type": "Microsoft.Resources/deployments", 
+            "name": "AnalyticsCCUJob", 
+            "apiVersion": "[variables('deploymentAPI')]", 
+            "properties": { 
+                "mode": "Incremental", 
+                "templateLink": {
+                    "uri": "[variables('AnalyticsTemplateURI')[parameters('deployAnalytics')]]",
+                    "contentVersion": "1.0.0.0"
+                }, 
+                "parameters": {
+                    "jobProperties": {
+                        "value" : {
+                            "jobName": "",
+                            "SKU": "",
+                            "streamingUnits": 1,
+                            "query": ""
+                        }
+                    },
+                    "eventHubProperties": {
+                        "value": {
+                            "namespace": "",
+                            "hubname": "",
+                            "uri": "",
+                            "policyName": "",
+                            "policyKey": ""
+                        }
+                    },
+                    "consumerGroupName": {
+                    "value": ""
+                    },
+                    "storageProperties": {
+                        "value" : {
+                            "accountName": "",
+                            "accountKey": "",
+                            "container" : "",
+                            "pathPattern" : ""
+                        }
+                    }
+                }
+            } 
         } 
     ],
     "outputs": {
