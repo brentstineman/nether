@@ -1,0 +1,41 @@
+/*
+* This is a sample parameter file for use in doing a Nether deployment via the nether-deploy-analyticsEHToBlob.json template.
+* This job consumes event hub messages and outputs them to blob storage. The template will create a consumer group, the Stream 
+* Anallytics Job, and associate it with the designated output storage account.
+*
+* For more information, please refer to the Nether repository at: https://github.com/MicrosoftDX/nether/tree/master/deployment
+*/
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "jobProperties": {
+      "value" : {
+        "jobName": "",
+        "SKU": "",
+        "streamingUnits": 1,
+        "query": ""
+      }
+    },
+    "eventHubProperties": {
+      "value": {
+        "namespace": "",
+        "hubname": "",
+        "uri": "",
+        "policyName": "",
+        "policyKey": ""
+      }
+    },
+    "consumerGroupName": {
+      "value": ""
+    },
+    "storageProperties": {
+      "value" : {
+        "accountName": "",
+        "accountKey": "",
+        "container" : "",
+        "pathPattern" : ""
+      }
+    }
+  }
+}
