@@ -93,12 +93,20 @@
                 "description": "The password of the admin user of the SQL Server"
             }
         },
+        "deployAnalytics": {
+            "type": "string",
+            "defaultValue": "no",
+            "allowedValues": [
+                "yes", "no"
+            ],
+            "metadata": {
+                "description": "Do we deploy the analyltics infrastructure"
+            }
+        },
         "analyticsEventHubNamespace": {
             "type": "string",
-            "minLength": 3,
-            "maxLength": 15,
             "metadata": {
-                "description": "The unique storage account for use by Nether. only allows alpha characters and '-'. Cannot start or end with '-'."
+                "description": "The namespace to be used by analytics. Leave blank to not deploy the analytics resources"
             }
         },
         "serviceBusTier": {
@@ -198,7 +206,11 @@
         "dbTemplateURI": "[concat(uri(parameters('templateBaseURL'), 'nether-deploy-db.json'), parameters('templateSASToken'))]",
         "WebTemplateURI": "[concat(uri(parameters('templateBaseURL'), 'nether-deploy-web.json'), parameters('templateSASToken'))]",
         "StorageTemplateURI": "[concat(uri(parameters('templateBaseURL'), 'nether-deploy-storageAccount.json'), parameters('templateSASToken'))]",
-        "EventHubTemplateURI": "[concat(uri(parameters('templateBaseURL'), 'nether-deploy-eventhub.json'), parameters('templateSASToken'))]"
+        "EventHubTemplateURI": "[concat(uri(parameters('templateBaseURL'), 'nether-deploy-eventhub.json'), parameters('templateSASToken'))]",
+        "AnalyticsTemplateURI": {
+            "yes": "[concat(uri(parameters('templateBaseURL'), 'nether-deploy-analyticsEHToBlob.json'), parameters('templateSASToken'))]",
+            "no": "[concat(uri(parameters('templateBaseURL'), 'nether-deploy-blank.json'), parameters('templateSASToken'))]"
+        }
     },
     "resources": [ 
         { 

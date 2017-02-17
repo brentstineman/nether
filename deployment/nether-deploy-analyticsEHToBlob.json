@@ -1,37 +1,19 @@
 /*
-* This template create an analytics job that will consume from event hub and write to blob storage
-* 
+* This template is used to create Stream Analytics Jobs to consume from Azure's Event Hub, select specific events, and
+* persist them to blob storage. The template will create an Event Hub consumer group, the Stream 
+* Anallytics Job, and associate it with the designated output storage account (which should already exist).
+*
 * For more information, please refer to the Nether repository at: https://github.com/MicrosoftDX/nether/tree/master/deployment
 */
 {
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "streamJobName": {
-            "type": "string",
-            "metadata": {
-                "description": ""
+        "jobProperties": {
+            "type" : "object",
+            "metadata" : {
+                "description" : "a JSON object job name, SKU, streaming units, and query to execute"
             }
-        },
-        "SKU": { 
-            "type": "string", 
-            "defaultValue": "Standard", 
-            "metadata": { 
-                "description": ""
-            } 
-        },
-        "streamingUnits": {
-            "type": "int",
-            "defaultValue": 1,
-            "metadata": {
-                "description": ""
-            }
-        },
-        "Query": { 
-            "type": "string", 
-            "metadata": { 
-                "description": ""
-            } 
         },
         "eventHubProperties": {
             "type" : "object",
@@ -42,45 +24,70 @@
         "consumerGroupName": {
             "type": "string",
             "defaultValue": "analytics",
-            "metadata": "the name of the consumer group to be used by this analytics job"
+            "metadata": {
+                "description" :"the name of the consumer group to be used by this analytics job"
+            }
         },
         "storageProperties": {
             "type" : "object",
             "metadata" : {
-                "description" : "a JSON object containing: storage account name, and account key"
+                "description" : "a JSON object containing: storage account name, and account key, and output container name"
             }
         }
     },
     "variables": {
         "ehApiVersion": "2015-08-01",
         "asaApiVersion": "2015-09-01",
-        "analyticDataSourceProperties": {
-            "eventHubName": "[parameters('eventHubProperties')['hubname']]",
+        /* the input data source (ds) properties for the analytics job */
+        "inputDSProperties": {
             "serviceBusNamespace": "[parameters('eventHubProperties')['namespace']]",
+            "eventHubName": "[parameters('eventHubProperties')['hubname']]",
             "sharedAccessPolicyName": "[parameters('eventHubProperties')['policyName']]",
             "sharedAccessPolicyKey": "[parameters('eventHubProperties')['policyKey']]",
             "consumerGroupName": "[parameters('consumerGroupName')]"
+        },
+        /* the analytics job transformation properties */
+        "transformProperties": {
+            "streamingUnits": "[parameters('jobProperties')['streamingUnits']]",
+            "query": "[parameters('jobProperties')['query']]"
+        },
+        /* the output data source (ds) properties for the analytics jobs */
+        "outputDSProperties": 
+        {
+            "storageAccounts": [
+                {
+                    "accountName": "[parameters('storageProperties')['accountName']]",
+                    "accountKey": "[parameters('storageProperties')['accountKey']]"
+                }
+            ],
+            "container": "[parameters('storageProperties')['container']]",
+            "pathPattern": "[concat(parameters('storageProperties')['pathPattern'], '/{date}')]",
+            "dateFormat": "yyyy/MM/dd"
         }
     },
     "resources": [
+        /* create the consumer group for this streaming job */
         {
-            "type": "Microsoft.EventHub/ConsumerGroups",
-            "name": "[concat('Microsoft.EventHub/ConsumerGroups', parameters('consumerGroupName'))]",
+            "type": "Microsoft.EventHub/Namespaces/EventHubs/ConsumerGroups",
+            "name": "[concat(variables('inputDSProperties')['serviceBusNamespace'], '/', variables('inputDSProperties')['eventHubName'], '/', parameters('consumerGroupName'))]",
             "apiVersion": "[variables('ehApiVersion')]",
             "location": "[resourceGroup().location]",
             "properties": {
-                "path": "[concat(parameters('eventHubProperties')['namespace'],'/', parameters('eventHubProperties')['hubname'])]"
+                "path": "[concat('Microsoft.EventHub/Namespaces',parameters('eventHubProperties')['namespace'],'/', parameters('eventHubProperties')['hubname'])]"
             }
         },
-        /* Azure stream analytics job for calculating the concurrent users */
+        /* Azure stream analytics job */
         {
             "type": "Microsoft.StreamAnalytics/StreamingJobs",
-            "name": "[parameters('streamJobName')]",
+            "name": "[parameters('jobProperties')['jobName']]",
             "apiVersion": "[variables('asaApiVersion')]",
             "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.EventHub/Namespaces/',variables('inputDSProperties')['serviceBusNamespace'],'/EventHubs/',variables('inputDSProperties')['eventHubName'],'/ConsumerGroups/',parameters('consumerGroupName'))]"
+            ],
             "properties": {
                 "sku": {
-                    "name": "[parameters('SKU')]"  
+                    "name": "[parameters('jobProperties')['SKU']]"  
                 },
                 "outputStartMode": "LastOutputEventTime",
                 "inputs": [
@@ -96,17 +103,14 @@
                             },
                             "datasource": {
                                 "type": "Microsoft.ServiceBus/EventHub",
-                                "properties": ["variables('analyticDataSourceProperties')"]
+                                "properties": "[variables('inputDSProperties')]"
                             }
                         }
                     }
                 ],
                 "transformation": {
-                    "name": "[parameters('streamJobName')]",
-                    "properties": {
-                        "streamingUnits": "[parameters('streamingUnits')]",
-                        "query": "[parameters('Query')]"
-                    }
+                    "name": "[parameters('jobProperties')['jobName']]",
+                    "properties": "[variables('transformProperties')]"
                 },
                 "outputs": [
                     {
@@ -115,23 +119,13 @@
                         "serialization": {
                             "type": "CSV",
                             "properties": {
-                            "fieldDelimiter": ",",
-                            "encoding": "UTF8"
+                                "fieldDelimiter": ",",
+                                "encoding": "UTF8"
                             }
                         },
                         "datasource": {
                             "type": "Microsoft.Storage/Blob",
-                            "properties": {
-                                "storageAccounts": [
-                                    {
-                                    "accountName": "[variables('storageAccountName')]",
-                                    "accountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2015-06-15').key1]"
-                                    }
-                                ],
-                                "container": "[variables('asaCCUContainerName')]",
-                                "pathPattern": "sessions/date={date}",
-                                "dateFormat": "yyyy-MM-dd"
-                            }
+                            "properties": "[variables('outputDSProperties')]"
                         }
                         }
                     }
